@@ -1,4 +1,11 @@
 from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class SubtitleEvent:
+    start: Optional[float]
+    end: Optional[float]
+    text: str
 from typing import List
 import os
 import pysubs2
