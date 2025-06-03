@@ -17,7 +17,14 @@ def auto_align(
     similarity_threshold: float = 80.0,
     max_line_offset: int = 15
 ) -> List[Tuple[int, int]]:
-    """Return list of (human_idx, ai_idx) where texts match with high similarity."""
+    """Return list of ``(human_idx, ai_idx)`` pairs for text matches.
+
+    Each human line is compared against AI lines within ``±max_line_offset``.
+    The candidate with the highest fuzzy ratio above ``similarity_threshold`` is
+    selected. Lines without a suitable match are skipped. Returned indices are
+    sorted by human line so that ``ai_idx`` values strictly increase.
+    Raises ``ValueError`` if either list is empty.
+    """
     if not ai_events or not human_events:
         raise ValueError("Subtitle event lists must not be empty")
 
@@ -51,12 +58,22 @@ def refine_alignment_with_anchors(
     similarity_threshold: float = 80.0,
     max_line_offset: int = 10
 ) -> List[Tuple[int, int]]:
-    """Re-run auto alignment on segments separated by provided anchors."""
+    """Realign subtitles while respecting manual anchors.
+
+    ``anchors`` should contain ``(ai_idx, human_idx)`` tuples. The sequences are
+    split at each anchor and :func:`auto_align` is run on every segment. Anchor
+    pairs are preserved in the final alignment. A ``ValueError`` is raised if an
+    anchor references an index outside the provided lists.
+    """
     if not ai_events or not human_events:
         raise ValueError("Subtitle event lists must not be empty")
 
     if not anchors:
         return auto_align(ai_events, human_events, similarity_threshold, max_line_offset)
+
+    for ai_idx, h_idx in anchors:
+        if ai_idx >= len(ai_events) or h_idx >= len(human_events) or ai_idx < 0 or h_idx < 0:
+            raise ValueError("Anchor index out of range")
 
     combined: List[Tuple[int, int]] = []
     anchors_sorted = sorted(anchors, key=lambda p: (p[1], p[0]))

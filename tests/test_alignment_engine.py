@@ -34,6 +34,16 @@ class TestAlignmentEngine(unittest.TestCase):
         expected = [(0, 0), (1, 1), (3, 2), (4, 3), (5, 4)]
         self.assertEqual(result, expected)
 
+    def test_empty_lists_error(self):
+        with self.assertRaises(ValueError):
+            auto_align([], self.human)
+        with self.assertRaises(ValueError):
+            refine_alignment_with_anchors(self.ai, [], [])
+
+    def test_invalid_anchor_error(self):
+        with self.assertRaises(ValueError):
+            refine_alignment_with_anchors(self.ai, self.human, [(10, 0)])
+
 
 if __name__ == "__main__":
     unittest.main()
