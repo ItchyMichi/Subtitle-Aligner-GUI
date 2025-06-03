@@ -49,6 +49,14 @@ End
     return p
 
 
+def create_bom_srt_file(tmp_path: Path) -> Path:
+    """Create an SRT file that begins with a UTF-8 BOM."""
+    content = "\ufeff1\n00:00:01,000 --> 00:00:02,000\nHello\n\n2\n00:00:02,500 --> 00:00:04,000\nWorld"
+    p = tmp_path / "bom.srt"
+    p.write_text(content, encoding="utf-8")
+    return p
+
+
 def test_load_subtitles_srt(tmp_path):
     path = create_srt_file(tmp_path)
     events = load_subtitles(str(path))
@@ -95,4 +103,13 @@ def test_load_multiline_subtitles(tmp_path):
     assert events == [
         SubtitleEvent(1, 1.0, 3.0, "Hello\nWorld"),
         SubtitleEvent(2, 4.0, 5.0, "End"),
+    ]
+
+
+def test_load_subtitles_with_bom(tmp_path):
+    path = create_bom_srt_file(tmp_path)
+    events = load_subtitles(str(path))
+    assert events == [
+        SubtitleEvent(1, 1.0, 2.0, "Hello"),
+        SubtitleEvent(2, 2.5, 4.0, "World"),
     ]

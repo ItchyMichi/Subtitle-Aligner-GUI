@@ -31,7 +31,8 @@ def _format_timestamp(seconds: float, as_vtt: bool = False) -> str:
 def load_subtitles(path: str) -> List[SubtitleEvent]:
     ext = os.path.splitext(path)[1].lower()
     events: List[SubtitleEvent] = []
-    with open(path, encoding='utf-8') as f:
+    # Handle optional UTF-8 BOM by using utf-8-sig so that BOM is stripped if present
+    with open(path, encoding='utf-8-sig') as f:
         raw_lines = [line.rstrip('\n') for line in f]
 
     i = 0
