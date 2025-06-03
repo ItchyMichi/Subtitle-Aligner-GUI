@@ -1,6 +1,7 @@
 from typing import List, Tuple
 from parser.subtitle_parser import SubtitleEvent, save_subtitles
 
+
 def generate_retimed_subtitles(ai_events: List[SubtitleEvent], human_events: List[SubtitleEvent], alignment: List[Tuple[int, int]], output_path: str) -> None:
     output_events: List[SubtitleEvent] = []
     for out_index, (ai_idx, human_idx) in enumerate(alignment, start=1):
