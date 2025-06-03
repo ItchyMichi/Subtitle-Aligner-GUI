@@ -2,12 +2,16 @@ from dataclasses import dataclass
 from typing import List
 import os
 
+import pysubs2
+
+
 @dataclass
 class SubtitleEvent:
     index: int
     start: float  # seconds
     end: float    # seconds
     text: str
+
 
 
 def _parse_timestamp(ts: str) -> float:
@@ -67,3 +71,30 @@ def save_subtitles(events: List[SubtitleEvent], path: str) -> None:
         lines.append('')
     with open(path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
+
+def load_subtitles(path: str) -> List[SubtitleEvent]:
+    """Read .srt or .vtt from `path` using pysubs2 and convert to List[SubtitleEvent]."""
+    subs = pysubs2.load(path)
+    events: List[SubtitleEvent] = []
+    for idx, line in enumerate(subs, start=1):
+        events.append(
+            SubtitleEvent(
+                index=idx,
+                start=line.start / 1000.0,
+                end=line.end / 1000.0,
+                text=line.text,
+            )
+        )
+    return events
+
+def save_subtitles(events: List[SubtitleEvent], path: str) -> None:
+    """Write `events` in SRT or VTT format based on path extension."""
+    subs = pysubs2.SSAFile()
+    for ev in events:
+        subs.events.append(
+            pysubs2.SSAEvent(start=int(ev.start * 1000), end=int(ev.end * 1000), text=ev.text)
+        )
+
+    ext = os.path.splitext(path)[1].lower()
+    fmt = "srt" if ext == ".srt" else "vtt"
+    subs.save(path, format_=fmt)
