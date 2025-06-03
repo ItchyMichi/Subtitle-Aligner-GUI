@@ -32,24 +32,42 @@ def load_subtitles(path: str) -> List[SubtitleEvent]:
     ext = os.path.splitext(path)[1].lower()
     events: List[SubtitleEvent] = []
     with open(path, encoding='utf-8') as f:
-        lines = [line.strip() for line in f.readlines() if line.strip()]
+        raw_lines = [line.rstrip('\n') for line in f]
+
     i = 0
     idx = 1
-    if ext == '.vtt' and lines and lines[0].startswith('WEBVTT'):
-        lines = lines[1:]
-    while i < len(lines):
-        if ext == '.srt':
-            # skip numeric counter
-            if lines[i].isdigit():
-                i += 1
-        times = lines[i]
-        text = lines[i + 1]
-        start_ts, end_ts = [t.strip() for t in times.split('-->')]
+    if ext == '.vtt' and raw_lines and raw_lines[0].startswith('WEBVTT'):
+        i = 1
+
+    while i < len(raw_lines):
+        line = raw_lines[i].strip()
+        if not line:
+            i += 1
+            continue
+
+        if ext == '.srt' and line.isdigit():
+            i += 1
+            if i >= len(raw_lines):
+                break
+            line = raw_lines[i].strip()
+
+        times = line
+        parts = times.split('-->')
+        if len(parts) != 2:
+            raise ValueError(f"Invalid timestamp line: {times}")
+        start_ts, end_ts = [t.strip() for t in parts]
+        i += 1
+        text_lines = []
+        while i < len(raw_lines) and raw_lines[i].strip() != '':
+            text_lines.append(raw_lines[i].rstrip('\n').strip())
+            i += 1
+        text = '\n'.join(text_lines)
         start = _parse_timestamp(start_ts)
         end = _parse_timestamp(end_ts)
         events.append(SubtitleEvent(idx, start, end, text))
         idx += 1
-        i += 2
+        while i < len(raw_lines) and raw_lines[i].strip() == '':
+            i += 1
     return events
 
 

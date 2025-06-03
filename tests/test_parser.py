@@ -34,6 +34,21 @@ World
     return p
 
 
+def create_multiline_srt_file(tmp_path: Path) -> Path:
+    content = """1
+00:00:01,000 --> 00:00:03,000
+Hello
+World
+
+2
+00:00:04,000 --> 00:00:05,000
+End
+"""
+    p = tmp_path / "multi.srt"
+    p.write_text(content, encoding="utf-8")
+    return p
+
+
 def test_load_subtitles_srt(tmp_path):
     path = create_srt_file(tmp_path)
     events = load_subtitles(str(path))
@@ -72,3 +87,12 @@ def test_save_subtitles_roundtrip_vtt(tmp_path):
     save_subtitles(events, str(path))
     loaded = load_subtitles(str(path))
     assert loaded == events
+
+
+def test_load_multiline_subtitles(tmp_path):
+    path = create_multiline_srt_file(tmp_path)
+    events = load_subtitles(str(path))
+    assert events == [
+        SubtitleEvent(1, 1.0, 3.0, "Hello\nWorld"),
+        SubtitleEvent(2, 4.0, 5.0, "End"),
+    ]
